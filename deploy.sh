@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # One-command deployment script for Vault + Kubernetes integration
-# Usage: ./deploy.sh <namespace> [policy] [ttl]
+# Usage: ./deploy.sh <namespace> [policy] [ttl] [-e|--env-file <path>]
 # Example: ./deploy.sh my-app
-# Note: Script will use .env file in the same directory
+# Example: ./deploy.sh my-app k8s-namespaces 24h --env-file /path/to/.env
+# Note: Script will use .env file in the same directory by default
 
 set -e
 
@@ -15,28 +16,81 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Parameters
-NAMESPACE=${1}
-POLICY=${2:-"k8s-namespaces"}
-TTL=${3:-"24h"}
+# Default values
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_ENV_FILE="${SCRIPT_DIR}/.env"
+ENV_FILE=""
+
+# Parse arguments
+NAMESPACE=""
+POLICY="k8s-namespaces"
+TTL="24h"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -e|--env-file)
+            ENV_FILE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: $0 <namespace> [policy] [ttl] [-e|--env-file <path>]"
+            echo ""
+            echo "Arguments:"
+            echo "  namespace           Kubernetes namespace to create/use (required)"
+            echo "  policy              Vault policy name (default: k8s-namespaces)"
+            echo "  ttl                 Token TTL (default: 24h)"
+            echo ""
+            echo "Options:"
+            echo "  -e, --env-file      Path to .env file (default: ./.env)"
+            echo "  -h, --help          Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0 my-app"
+            echo "  $0 data-ingestion k8s-namespaces 48h"
+            echo "  $0 my-app k8s-namespaces 24h --env-file /path/to/.env"
+            echo "  $0 my-app --env-file ../config/.env"
+            echo ""
+            exit 0
+            ;;
+        *)
+            if [ -z "$NAMESPACE" ]; then
+                NAMESPACE="$1"
+            elif [ "$POLICY" == "k8s-namespaces" ]; then
+                POLICY="$1"
+            elif [ "$TTL" == "24h" ]; then
+                TTL="$1"
+            else
+                echo -e "${RED}❌ Unknown argument: $1${NC}"
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Use default .env file if not specified
+if [ -z "$ENV_FILE" ]; then
+    ENV_FILE="$DEFAULT_ENV_FILE"
+fi
+
+# Additional parameters
 SERVICE_ACCOUNT="vault-access-sa"
 AUTH_MOUNT="kubernetes"
 ROLE_NAME="k8s-namespace-${NAMESPACE}"
 SECRET_PATH="k8s/${NAMESPACE}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="${SCRIPT_DIR}/.env"
 
 # Validate inputs
 if [ -z "$NAMESPACE" ]; then
     echo -e "${RED}❌ Error: Namespace is required${NC}"
     echo ""
-    echo "Usage: $0 <namespace> [policy] [ttl]"
+    echo "Usage: $0 <namespace> [policy] [ttl] [-e|--env-file <path>]"
     echo ""
     echo "Examples:"
     echo "  $0 my-app"
     echo "  $0 data-ingestion k8s-namespaces 48h"
+    echo "  $0 my-app --env-file /path/to/.env"
     echo ""
-    echo "Note: Edit .env file with your secrets before running"
+    echo "Run '$0 --help' for more information"
     echo ""
     exit 1
 fi
@@ -52,7 +106,7 @@ echo -e "  📋 Policy:             ${GREEN}${POLICY}${NC}"
 echo -e "  ⏱️  TTL:                ${GREEN}${TTL}${NC}"
 echo -e "  👤 Service Account:    ${GREEN}${SERVICE_ACCOUNT}${NC}"
 echo -e "  📁 Secret Path:        ${GREEN}secret/${SECRET_PATH}${NC}"
-echo -e "  📄 Env File:           ${GREEN}.env${NC}"
+echo -e "  📄 Env File:           ${GREEN}${ENV_FILE}${NC}"
 echo ""
 
 # Check prerequisites
