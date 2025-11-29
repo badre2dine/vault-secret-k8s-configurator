@@ -1,0 +1,27 @@
+# Environment files with secrets
+.env
+.env.*
+!env.example
+
+# Vault tokens
+.vault-token
+*.token
+
+# OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Backup files
+*.backup
+*.bak
+*.swp
+*~
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
