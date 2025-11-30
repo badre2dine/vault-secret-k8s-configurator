@@ -254,7 +254,7 @@ kubectl config view --raw --minify \
 kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
 ```
 
-Example: https://192.168.1.181:6443
+Example: https://192.168.1.141:6443
 
 ### Step 8: Configure Vault Auth
 
