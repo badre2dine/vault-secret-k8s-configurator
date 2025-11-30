@@ -4,11 +4,11 @@ Automated deployment script for integrating HashiCorp Vault with Kubernetes name
 
 ## Features
 
-- 🚀 Automated Kubernetes namespace creation with Vault integration
-- 🔐 Reads environment variables from .env files and creates empty secrets in Vault
-- 🎯 Creates VaultAuth and VaultStaticSecret CRDs automatically
-- ⚙️ Configurable TTL and Vault policies
-- 🔒 Security-first: only key names are read from .env, values stay empty in Vault
+- Automated Kubernetes namespace creation with Vault integration
+- Reads environment variables from .env files and creates empty secrets in Vault
+- Creates VaultAuth and VaultStaticSecret CRDs automatically
+- Configurable TTL and Vault policies
+- Security-first: only key names are read from .env, values stay empty in Vault
 
 ## Prerequisites
 
